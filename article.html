@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>From Terminal to Web — EMPS Article</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+/* Article-specific overrides */
+.article-hero {
+  position: relative; overflow: hidden;
+  padding: 5rem 2rem 4rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.article-hero-bg {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: .4;
+}
+.article-hero-inner {
+  position: relative; z-index: 1;
+  max-width: 800px; margin: 0 auto;
+}
+
+.article-cat {
+  font-family: var(--font-m); font-size: .72rem; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--accent);
+  display: flex; align-items: center; gap: .6rem; margin-bottom: 1.5rem;
+}
+.article-cat::before { content: ''; width: 24px; height: 1px; background: var(--accent); }
+
+.article-h1 {
+  font-family: var(--font-d); font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 700; line-height: 1.05; letter-spacing: .03em;
+  color: var(--text); text-transform: uppercase; margin-bottom: 1rem;
+}
+.article-h1 em { font-style: normal; color: var(--accent); }
+
+.article-deck {
+  font-size: 1.15rem; color: var(--text-muted); line-height: 1.7;
+  max-width: 600px; margin-bottom: 2rem;
+}
+
+.article-meta {
+  display: flex; align-items: center; gap: 1.5rem; font-size: .8rem;
+  color: var(--text-muted); font-family: var(--font-m); flex-wrap: wrap;
+}
+.article-meta span { display: flex; align-items: center; gap: .4rem; }
+
+/* Article body */
+.article-body {
+  max-width: 800px; margin: 0 auto; padding: 3.5rem 2rem;
+}
+
+.art-section { margin-bottom: 3rem; }
+
+.art-h2 {
+  font-family: var(--font-d); font-size: 1.2rem; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 1.25rem;
+  display: flex; align-items: center; gap: .75rem;
+}
+.art-h2::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.art-p {
+  font-size: 1rem; line-height: 1.82; color: var(--text);
+  margin-bottom: 1.25rem;
+}
+.art-p:first-of-type::first-letter {
+  font-family: var(--font-d); font-size: 3.5rem; font-weight: 700;
+  float: left; line-height: .85; margin-right: .15em; color: var(--accent); letter-spacing: -.02em;
+}
+
+/* Blockquote */
+.art-quote {
+  border-left: 3px solid var(--accent); margin: 2rem 0;
+  padding: 1rem 1.5rem; background: var(--accent-glow);
+  border-radius: 0 var(--r) var(--r) 0;
+}
+.art-quote p {
+  font-family: var(--font-d); font-size: 1.25rem; font-weight: 400;
+  letter-spacing: .02em; line-height: 1.5; color: var(--text);
+  font-style: italic; margin: 0;
+}
+.art-quote cite {
+  display: block; margin-top: .75rem;
+  font-family: var(--font-m); font-size: .72rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text-muted); font-style: normal;
+}
+
+/* Code block */
+.art-code {
+  background: var(--bg); border: 1px solid var(--border-lt);
+  border-radius: var(--r); padding: 1.25rem 1.5rem; margin: 1.5rem 0;
+  overflow-x: auto;
+}
+.art-code pre {
+  font-family: var(--font-m); font-size: .82rem; line-height: 1.7;
+  color: var(--text-muted); margin: 0; white-space: pre;
+}
+.art-code .kw  { color: var(--blue); }
+.art-code .ty  { color: var(--orange); }
+.art-code .cm  { color: var(--text-faint); font-style: italic; }
+.art-code .st  { color: var(--green); }
+
+/* Features grid */
+.feature-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; margin: 1.5rem 0;
+}
+.feature-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 1rem 1.25rem;
+  display: flex; gap: .75rem; align-items: flex-start;
+}
+.feature-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-top: .55rem; flex-shrink: 0; }
+.feature-text h4 { font-family: var(--font-d); font-size: .9rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; margin-bottom: .2rem; }
+.feature-text p  { font-size: .82rem; color: var(--text-muted); line-height: 1.5; }
+
+/* Schema table */
+.schema-table { width: 100%; font-size: .82rem; margin: 1rem 0; }
+.schema-table th { font-family: var(--font-m); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }
+.schema-table .field { font-family: var(--font-m); color: var(--accent); }
+.schema-table .type  { font-family: var(--font-m); color: var(--blue); }
+.schema-table .desc  { color: var(--text-muted); }
+
+/* Timeline */
+.timeline { position: relative; padding-left: 2rem; }
+.timeline::before { content: ''; position: absolute; left: 6px; top: 6px; bottom: 6px; width: 1px; background: var(--border); }
+.timeline-item { position: relative; margin-bottom: 1.5rem; }
+.timeline-item::before { content: ''; position: absolute; left: -1.65rem; top: .45rem; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+.timeline-item h4 { font-family: var(--font-d); font-size: .9rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text); margin-bottom: .25rem; }
+.timeline-item p  { font-size: .85rem; color: var(--text-muted); line-height: 1.6; }
+
+/* CTA section */
+.art-cta {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 2rem; margin-top: 3rem;
+  text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem;
+}
+.art-cta h3 { font-family: var(--font-d); font-size: 1.5rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.art-cta p  { font-size: .9rem; color: var(--text-muted); max-width: 400px; }
+.art-cta-btns { display: flex; gap: .75rem; flex-wrap: wrap; justify-content: center; }
+
+/* TOC sidebar - desktop */
+@media (min-width: 1100px) {
+  .article-outer { display: grid; grid-template-columns: 1fr 220px; gap: 0; max-width: 1100px; margin: 0 auto; }
+  .article-body  { max-width: 100%; }
+  .toc-aside { padding: 3.5rem 1rem 3.5rem 2rem; position: sticky; top: 56px; align-self: start; }
+}
+.toc-aside { display: none; }
+@media (min-width: 1100px) { .toc-aside { display: block; } }
+.toc-title { font-family: var(--font-d); font-size: .7rem; font-weight: 600; letter-spacing: .15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; }
+.toc-list { list-style: none; display: flex; flex-direction: column; gap: .4rem; }
+.toc-list a { font-size: .8rem; color: var(--text-muted); text-decoration: none; padding: .2rem .6rem; border-left: 2px solid transparent; display: block; transition: all .2s; }
+.toc-list a:hover { color: var(--text); border-left-color: var(--accent); background: var(--accent-glow); }
+
+@media (max-width: 600px) {
+  .article-hero { padding: 3rem 1rem 2.5rem; }
+  .article-body { padding: 2rem 1rem; }
+  .feature-grid { grid-template-columns: 1fr; }
+  .art-p:first-of-type::first-letter { font-size: 2.5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav class="main-nav">
+  <a href="/" class="nav-logo">EMP<span>S</span></a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/dashboard.html">Dashboard</a></li>
+    <li><a href="/employees.html">Employees</a></li>
+    <li><a href="/article.html" class="active">Article</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<header class="article-hero">
+  <div class="article-hero-bg"></div>
+  <div class="article-hero-inner anim anim-1">
+    <div class="article-cat">Technical Report · Employee Systems</div>
+    <h1 class="article-h1">
+      From Terminal<br>to <em>Web Platform</em>
+    </h1>
+    <p class="article-deck">
+      How a C-language employee management program evolved into a full-stack, database-backed web platform — and what that transformation reveals about the enduring logic of workforce software.
+    </p>
+    <div class="article-meta">
+      <span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        June 2026
+      </span>
+      <span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        8 min read
+      </span>
+      <span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        Systems · Architecture · HR Tech
+      </span>
+    </div>
+  </div>
+</header>
+
+<!-- Body -->
+<div class="article-outer">
+  <div class="article-body">
+
+    <!-- INTRODUCTION -->
+    <div class="art-section" id="intro">
+      <h2 class="art-h2">Introduction</h2>
+      <p class="art-p">
+        The original Employee Management System was written in C — a language that, while far removed from modern web abstractions, enforces a kind of rigorous clarity about data that many higher-level systems quietly abandon. It managed employees as typed structs, persisted them to binary files, and offered a menu-driven interface through standard input and output. Every field had an explicit type. Every operation had a defined boundary.
+      </p>
+      <p class="art-p">
+        What the C program lacked was accessibility. It required a compiled binary, a terminal, and physical proximity to the machine running it. It could not be shared across a team, queried through a browser, or scaled to accommodate concurrent users. These limitations — not design flaws, but inherent constraints of the environment — became the impetus for a platform reimagining.
+      </p>
+      <p class="art-p">
+        EMPS (Employee Management Platform System) is that reimagining. It preserves the exact same logical model as the original program — employees, leave allowances, approval workflows, active/inactive states — while translating the implementation into a browser-accessible, database-backed web application deployed on Netlify's global edge infrastructure.
+      </p>
+    </div>
+
+    <div class="art-quote">
+      <p>"The data model is the program. Everything else is plumbing."</p>
+      <cite>— System design principle, carried forward from the C implementation</cite>
+    </div>
+
+    <!-- ORIGINAL SYSTEM -->
+    <div class="art-section" id="original">
+      <h2 class="art-h2">The Original System</h2>
+      <p class="art-p">
+        The C implementation defined its domain model with surgical precision. An <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">Employee</code> struct captured name, ID, salary, leave balances, leave status, and an active flag. The system loaded all employees into a dynamically-allocated array at startup — no lazy loading, no connection pool, just <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">malloc</code> and a count variable.
+      </p>
+
+      <div class="art-code">
+        <pre><span class="cm">// The original Employee struct (C)</span>
+<span class="kw">typedef struct</span> {
+    <span class="ty">char</span>  name[50];
+    <span class="ty">int</span>   id;
+    <span class="ty">char</span>  password[50];
+    <span class="ty">float</span> salary;
+    <span class="ty">int</span>   leavesAllowed;
+    <span class="ty">int</span>   leavesTaken;
+    <span class="ty">int</span>   leavesPending;
+    <span class="ty">int</span>   leaveRequestStatus; <span class="cm">// 0=None 1=Pending 2=Approved 3=Rejected</span>
+    <span class="ty">int</span>   isActive;           <span class="cm">// 1=active, 0=inactive</span>
+} Employee;</pre>
+      </div>
+
+      <p class="art-p">
+        The leave workflow was particularly elegant in its simplicity. An employee requested leave by setting <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">leavesPending</code> and <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">leaveRequestStatus = 1</code>. The admin approved or rejected by reading that status and updating the fields accordingly. Persistence happened by serializing the entire array to a binary file on every mutation. Transactional? Barely. Correct? Completely.
+      </p>
+    </div>
+
+    <!-- TRANSFORMATION -->
+    <div class="art-section" id="transform">
+      <h2 class="art-h2">The Transformation</h2>
+      <p class="art-p">
+        Migrating to the web required solving three problems the C program never had to consider: concurrent access, distributed persistence, and a user interface that works without a compiler.
+      </p>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <h4>Data Layer → Postgres via Netlify Database</h4>
+          <p>The struct becomes a relational table with typed columns that map directly to the original fields. Drizzle ORM provides type-safe queries; Netlify manages the managed Postgres instance automatically.</p>
+        </div>
+        <div class="timeline-item">
+          <h4>Business Logic → Netlify Functions (TypeScript)</h4>
+          <p>The admin and employee menus become HTTP endpoints. Each function handles a specific HTTP method and path, replacing scanf loops with JSON request/response cycles.</p>
+        </div>
+        <div class="timeline-item">
+          <h4>Interface → Browser-based HTML/CSS/JS</h4>
+          <p>The terminal UI becomes four distinct HTML pages — landing, dashboard, employee management, and this article — each styled with a consistent design system and communicating with the API via fetch.</p>
+        </div>
+        <div class="timeline-item">
+          <h4>Deployment → Netlify Edge Network</h4>
+          <p>What previously required a compiled binary and local execution now deploys globally with a single git push. The database branches automatically for preview deployments.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="art-section" id="features">
+      <h2 class="art-h2">Platform Features</h2>
+      <p class="art-p">
+        EMPS retains every capability from the original program while adding a layer of accessibility and visualization that a terminal interface cannot provide.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <h4>Live Dashboard</h4>
+            <p>Real-time KPIs: headcount, payroll, leave utilization, department breakdown — all animated on load.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <h4>Employee CRUD</h4>
+            <p>Add, edit, and deactivate employees through a full management interface with modal forms and inline actions.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <h4>Leave Workflow</h4>
+            <p>Four-state leave lifecycle (None → Pending → Approved/Rejected) with inline review inside the edit modal.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <h4>Search &amp; Filter</h4>
+            <p>Filter by department, status, and leave state. Full-text search across name, ID, role, and department.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <h4>Safe Deactivation</h4>
+            <p>Employees are soft-deleted: flagged inactive rather than removed. Records and history are always preserved.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          <div class="feature-text">
+            <h4>Demo Seeding</h4>
+            <p>One-click seeding with eight realistic sample employees across multiple departments for immediate exploration.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATA MODEL -->
+    <div class="art-section" id="schema">
+      <h2 class="art-h2">Data Schema</h2>
+      <p class="art-p">
+        The web version's schema is a near-direct translation of the original struct. Every field from the C implementation is preserved; three new fields handle platform concerns.
+      </p>
+
+      <div class="table-wrap">
+        <table class="schema-table">
+          <thead>
+            <tr>
+              <th>Field</th><th>Type</th><th>Origin</th><th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="field">id</td><td class="type">serial PK</td><td class="text-m">Web</td><td class="desc">Auto-increment primary key</td></tr>
+            <tr><td class="field">name</td><td class="type">text</td><td class="text-a">C struct</td><td class="desc">Employee full name (was char[50])</td></tr>
+            <tr><td class="field">employee_id</td><td class="type">integer UNIQUE</td><td class="text-a">C struct</td><td class="desc">Business identifier (was int id)</td></tr>
+            <tr><td class="field">department</td><td class="type">text</td><td class="text-m">Web</td><td class="desc">Department name (new classification layer)</td></tr>
+            <tr><td class="field">role</td><td class="type">text</td><td class="text-m">Web</td><td class="desc">Job title / role description</td></tr>
+            <tr><td class="field">salary</td><td class="type">real</td><td class="text-a">C struct</td><td class="desc">Monthly salary (was float salary)</td></tr>
+            <tr><td class="field">leaves_allowed</td><td class="type">integer</td><td class="text-a">C struct</td><td class="desc">Annual leave allowance (was leavesAllowed)</td></tr>
+            <tr><td class="field">leaves_taken</td><td class="type">integer</td><td class="text-a">C struct</td><td class="desc">Approved days consumed (was leavesTaken)</td></tr>
+            <tr><td class="field">leaves_pending</td><td class="type">integer</td><td class="text-a">C struct</td><td class="desc">Days in current request (was leavesPending)</td></tr>
+            <tr><td class="field">leave_status</td><td class="type">integer</td><td class="text-a">C struct</td><td class="desc">0=None, 1=Pending, 2=Approved, 3=Rejected</td></tr>
+            <tr><td class="field">is_active</td><td class="type">boolean</td><td class="text-a">C struct</td><td class="desc">Active/deactivated (was int isActive)</td></tr>
+            <tr><td class="field">join_date</td><td class="type">timestamp</td><td class="text-m">Web</td><td class="desc">When the record was created (defaults to now)</td></tr>
+            <tr><td class="field">created_at</td><td class="type">timestamp</td><td class="text-m">Web</td><td class="desc">Row creation timestamp</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ARCHITECTURE -->
+    <div class="art-section" id="arch">
+      <h2 class="art-h2">Architecture</h2>
+      <p class="art-p">
+        The platform follows Netlify's recommended serverless pattern: static HTML files served from the CDN edge, Netlify Functions handling all API routes, and a managed Postgres database provisioned automatically on first connection. No server to manage. No infrastructure to provision. No Docker containers.
+      </p>
+      <div class="art-code">
+        <pre><span class="cm"># Project structure</span>
+/
+├── index.html          <span class="cm"># Landing page</span>
+├── dashboard.html      <span class="cm"># Live stats dashboard</span>
+├── employees.html      <span class="cm"># Employee management (CRUD)</span>
+├── article.html        <span class="cm"># This document</span>
+├── styles.css          <span class="cm"># Shared design system</span>
+├── netlify.toml        <span class="cm"># Build + function config</span>
+├── db/
+│   ├── schema.ts       <span class="cm"># Drizzle ORM schema</span>
+│   └── index.ts        <span class="cm"># Database client</span>
+└── netlify/functions/
+    ├── employees.ts    <span class="cm"># CRUD API  [GET/POST/PUT/DELETE]</span>
+    └── stats.ts        <span class="cm"># Dashboard stats  [GET]</span></pre>
+      </div>
+      <p class="art-p">
+        API requests follow REST conventions: <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">GET /api/employees</code> returns all records, <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">POST /api/employees</code> creates one, <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">PUT /api/employees/:id</code> updates any field subset, and <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">DELETE /api/employees/:id</code> performs the soft deactivation the C program's <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">deleteEmployee()</code> function implemented by setting <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">isActive = 0</code>.
+      </p>
+    </div>
+
+    <!-- CLOSING -->
+    <div class="art-section" id="close">
+      <h2 class="art-h2">What Survives the Translation</h2>
+      <p class="art-p">
+        The most striking thing about this migration is how little the core logic changed. The leave state machine is identical — four states, two transitions, one review step. The concept of soft deletion survived intact. Even the data types translate almost directly: C's <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">float</code> becomes Postgres <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">real</code>, <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">int</code> becomes <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">integer</code>, <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">char[]</code> becomes <code style="font-family:var(--font-m);color:var(--orange);font-size:.9em">text</code>.
+      </p>
+      <p class="art-p">
+        This is the lesson embedded in the translation: good domain modeling transcends its implementation. The original C programmer was not just writing a terminal app — they were encoding a precise, correct understanding of how employee records work. That precision is what survived. The terminal interface did not.
+      </p>
+    </div>
+
+    <div class="art-cta anim anim-5">
+      <h3>Try the Platform</h3>
+      <p>Explore live data, add employees, and see the dashboard in action.</p>
+      <div class="art-cta-btns">
+        <a href="/dashboard.html" class="btn btn-primary">Open Dashboard</a>
+        <a href="/employees.html" class="btn btn-secondary">Manage Employees</a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TOC sidebar (desktop) -->
+  <aside class="toc-aside">
+    <div class="toc-title">Contents</div>
+    <ul class="toc-list">
+      <li><a href="#intro">Introduction</a></li>
+      <li><a href="#original">The Original System</a></li>
+      <li><a href="#transform">The Transformation</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#schema">Data Schema</a></li>
+      <li><a href="#arch">Architecture</a></li>
+      <li><a href="#close">What Survives</a></li>
+    </ul>
+  </aside>
+</div>
+
+<div id="toasts"></div>
+
+</body>
+</html>
