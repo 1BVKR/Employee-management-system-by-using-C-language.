@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Employees — EMPS</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+/* Toolbar */
+.toolbar {
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+  padding: 1rem 2rem; border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.search-wrap {
+  position: relative; flex: 1; min-width: 200px; max-width: 340px;
+}
+.search-icon {
+  position: absolute; left: .75rem; top: 50%; transform: translateY(-50%);
+  color: var(--text-faint); pointer-events: none;
+}
+.search-input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border-lt);
+  border-radius: var(--r); color: var(--text); font-family: var(--font-b);
+  font-size: .875rem; padding: .5rem .875rem .5rem 2.25rem;
+  outline: none; transition: border-color .2s;
+}
+.search-input:focus { border-color: var(--accent); }
+.filter-select {
+  background: var(--bg); border: 1px solid var(--border-lt); border-radius: var(--r);
+  color: var(--text); font-family: var(--font-b); font-size: .875rem;
+  padding: .5rem .875rem; outline: none; cursor: pointer;
+}
+.filter-select:focus { border-color: var(--accent); }
+.toolbar-right { margin-left: auto; display: flex; gap: .5rem; }
+
+/* Table wrapper */
+.emp-table-wrap { padding: 1.5rem 2rem; }
+.emp-table-wrap.centered { max-width: 1400px; margin: 0 auto; }
+
+/* Avatar */
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--accent-dim); border: 1px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-d); font-size: .72rem; color: var(--accent); flex-shrink: 0;
+}
+.emp-name-cell { display: flex; align-items: center; gap: .7rem; }
+.emp-name { font-weight: 600; }
+.emp-role-sub { font-size: .78rem; color: var(--text-muted); }
+
+/* Action buttons in table */
+.action-cell { display: flex; gap: .4rem; }
+
+/* Empty state */
+.empty-state {
+  text-align: center; padding: 5rem 2rem;
+  display: flex; flex-direction: column; align-items: center; gap: 1rem;
+}
+.empty-icon {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: var(--surface-2); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+}
+.empty-title {
+  font-family: var(--font-d); font-size: 1.2rem; font-weight: 600;
+  letter-spacing: .05em; text-transform: uppercase;
+}
+.empty-sub { font-size: .9rem; color: var(--text-muted); max-width: 360px; }
+
+/* Leave review area in edit modal */
+.leave-review-box {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 1rem; margin-bottom: 1rem;
+}
+.leave-review-box h4 { font-family: var(--font-d); font-size: .85rem; letter-spacing: .07em; text-transform: uppercase; color: var(--orange); margin-bottom: .5rem; }
+.leave-review-box p  { font-size: .85rem; color: var(--text-muted); }
+.leave-actions { display: flex; gap: .5rem; margin-top: .75rem; }
+
+/* Confirm dialog */
+.confirm-modal { max-width: 380px; }
+.confirm-body { font-size: .9rem; color: var(--text-muted); margin-bottom: 1.25rem; }
+.confirm-name { font-weight: 600; color: var(--text); }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .toolbar { padding: .75rem 1rem; }
+  .emp-table-wrap { padding: 1rem; }
+  .hide-sm { display: none; }
+}
+</style>
+</head>
+<body>
+
+<nav class="main-nav">
+  <a href="/" class="nav-logo">EMP<span>S</span></a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/dashboard.html">Dashboard</a></li>
+    <li><a href="/employees.html" class="active">Employees</a></li>
+    <li><a href="/article.html">Article</a></li>
+  </ul>
+</nav>
+
+<header class="page-hd">
+  <div style="max-width:1400px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+    <div>
+      <h1 class="page-title">Employees</h1>
+      <p class="page-sub" id="empCount">Loading...</p>
+    </div>
+    <div style="display:flex;gap:.5rem">
+      <button class="btn btn-secondary btn-sm" onclick="seedDemo()">Seed Demo Data</button>
+      <button class="btn btn-primary btn-sm" onclick="openAddModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Employee
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="search-input" id="searchInput" type="text" placeholder="Search by name, ID, role…" oninput="applyFilters()"/>
+  </div>
+  <select class="filter-select" id="deptFilter" onchange="applyFilters()">
+    <option value="">All Departments</option>
+  </select>
+  <select class="filter-select" id="statusFilter" onchange="applyFilters()">
+    <option value="">All Status</option>
+    <option value="active">Active</option>
+    <option value="inactive">Inactive</option>
+  </select>
+  <select class="filter-select" id="leaveFilter" onchange="applyFilters()">
+    <option value="">All Leave</option>
+    <option value="0">No Request</option>
+    <option value="1">Pending</option>
+    <option value="2">Approved</option>
+    <option value="3">Rejected</option>
+  </select>
+</div>
+
+<!-- Table -->
+<div class="emp-table-wrap centered">
+  <div class="table-wrap" id="empTableWrap">
+    <div style="text-align:center;padding:3rem 0"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- ── ADD MODAL ── -->
+<div class="backdrop" id="addModal">
+  <div class="modal">
+    <div class="modal-hd">
+      <span class="modal-title">Add Employee</span>
+      <button class="modal-close" onclick="closeModal('addModal')">✕</button>
+    </div>
+    <form id="addForm" onsubmit="submitAdd(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input class="form-input" id="addName" placeholder="Ravi Menon" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Employee ID *</label>
+          <input class="form-input" id="addEmpId" type="number" placeholder="1001" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Department</label>
+          <input class="form-input" id="addDept" placeholder="Engineering" list="deptList" />
+          <datalist id="deptList"></datalist>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role / Title</label>
+          <input class="form-input" id="addRole" placeholder="Software Engineer" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Monthly Salary ($)</label>
+          <input class="form-input" id="addSalary" type="number" step="100" placeholder="75000" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Leaves Allowed / Year</label>
+          <input class="form-input" id="addLeaves" type="number" placeholder="5" value="5" min="0" max="365" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Employee</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── EDIT MODAL ── -->
+<div class="backdrop" id="editModal">
+  <div class="modal">
+    <div class="modal-hd">
+      <span class="modal-title">Edit Employee</span>
+      <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    </div>
+    <div id="editLeaveReview" style="display:none" class="leave-review-box">
+      <h4>Pending Leave Request</h4>
+      <p id="editLeaveDesc"></p>
+      <div class="leave-actions">
+        <button class="btn btn-sm" style="background:var(--green-dim);color:var(--green);border:1px solid var(--green)" onclick="reviewLeave('approve')">Approve</button>
+        <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:1px solid var(--red)" onclick="reviewLeave('reject')">Reject</button>
+      </div>
+    </div>
+    <form id="editForm" onsubmit="submitEdit(event)">
+      <input type="hidden" id="editId" />
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input class="form-input" id="editName" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Department</label>
+          <input class="form-input" id="editDept" list="deptList" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Role / Title</label>
+          <input class="form-input" id="editRole" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monthly Salary ($)</label>
+          <input class="form-input" id="editSalary" type="number" step="100" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Leaves Allowed / Year</label>
+          <input class="form-input" id="editLeavesAllowed" type="number" min="0" max="365" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="editActive">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── CONFIRM DEACTIVATE MODAL ── -->
+<div class="backdrop" id="confirmModal">
+  <div class="modal confirm-modal">
+    <div class="modal-hd">
+      <span class="modal-title">Deactivate Employee</span>
+      <button class="modal-close" onclick="closeModal('confirmModal')">✕</button>
+    </div>
+    <p class="confirm-body">
+      This will deactivate <span class="confirm-name" id="confirmName"></span>. They will no longer appear in active headcount but their records will be preserved.
+    </p>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('confirmModal')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDeactivate()">Deactivate</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+/* ─── State ─── */
+let allEmployees = [];
+let currentEditId = null;
+let currentDeactivateId = null;
+
+const DEPT_SUGGESTIONS = ['Engineering', 'Design', 'Finance', 'Operations', 'HR', 'Marketing', 'Sales', 'Legal'];
+
+const SEED_EMPLOYEES = [
+  { name: 'Ravi Menon',        employeeId: 1001, department: 'Engineering', role: 'Senior Developer',   salary: 87400, leavesAllowed: 6 },
+  { name: 'Priya Sharma',      employeeId: 1002, department: 'Design',       role: 'UX Lead',             salary: 79200, leavesAllowed: 6 },
+  { name: 'Ahmad Karimi',      employeeId: 1003, department: 'Operations',   role: 'Operations Manager',  salary: 73800, leavesAllowed: 7 },
+  { name: 'Fatima Al-Hassan',  employeeId: 1004, department: 'Finance',      role: 'Financial Analyst',   salary: 68500, leavesAllowed: 5 },
+  { name: 'Leon Fischer',      employeeId: 1005, department: 'Engineering',  role: 'Backend Engineer',    salary: 83100, leavesAllowed: 6 },
+  { name: 'Sunita Okafor',     employeeId: 1006, department: 'HR',           role: 'HR Specialist',       salary: 62400, leavesAllowed: 7 },
+  { name: 'Marco Esposito',    employeeId: 1007, department: 'Engineering',  role: 'Frontend Engineer',   salary: 80700, leavesAllowed: 6 },
+  { name: 'Yuki Tanaka',       employeeId: 1008, department: 'Design',       role: 'Product Designer',    salary: 76300, leavesAllowed: 5 },
+];
+
+/* ─── API ─── */
+async function api(url, opts = {}) {
+  const r = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  const body = await r.json();
+  if (!r.ok) throw new Error(body.error || 'Request failed');
+  return body;
+}
+
+/* ─── Load ─── */
+async function loadEmployees() {
+  try {
+    allEmployees = await api('/api/employees');
+    updateDeptFilter();
+    applyFilters();
+    document.getElementById('empCount').textContent =
+      `${allEmployees.filter(e => e.isActive).length} active · ${allEmployees.length} total`;
+  } catch {
+    document.getElementById('empTableWrap').innerHTML =
+      `<div class="empty-state"><p class="text-m">Failed to load employees.</p></div>`;
+  }
+}
+
+function updateDeptFilter() {
+  const depts = [...new Set(allEmployees.map(e => e.department))].sort();
+  const sel = document.getElementById('deptFilter');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All Departments</option>' +
+    depts.map(d => `<option value="${d}"${d === current ? ' selected' : ''}>${d}</option>`).join('');
+
+  // Datalist for add/edit forms
+  const dl = document.getElementById('deptList');
+  const allDepts = [...new Set([...depts, ...DEPT_SUGGESTIONS])].sort();
+  dl.innerHTML = allDepts.map(d => `<option value="${d}"></option>`).join('');
+}
+
+/* ─── Filter + Render ─── */
+function applyFilters() {
+  const q     = document.getElementById('searchInput').value.toLowerCase();
+  const dept  = document.getElementById('deptFilter').value;
+  const stat  = document.getElementById('statusFilter').value;
+  const leave = document.getElementById('leaveFilter').value;
+
+  const filtered = allEmployees.filter(e => {
+    if (q && !`${e.name} ${e.employeeId} ${e.role} ${e.department}`.toLowerCase().includes(q)) return false;
+    if (dept && e.department !== dept) return false;
+    if (stat === 'active' && !e.isActive) return false;
+    if (stat === 'inactive' && e.isActive) return false;
+    if (leave !== '' && String(e.leaveStatus) !== leave) return false;
+    return true;
+  });
+
+  renderTable(filtered);
+}
+
+function renderTable(data) {
+  if (!data.length) {
+    document.getElementById('empTableWrap').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div class="empty-title">${allEmployees.length === 0 ? 'No Employees Yet' : 'No Results'}</div>
+        <p class="empty-sub">${allEmployees.length === 0
+          ? 'Add your first employee or seed demo data to get started.'
+          : 'Try adjusting your search or filters.'}</p>
+        ${allEmployees.length === 0 ? '<button class="btn btn-primary" onclick="openAddModal()">Add First Employee</button>' : ''}
+      </div>`;
+    return;
+  }
+
+  const rows = data.map(e => `
+    <tr class="${e.isActive ? '' : 'inactive-row'}" style="${!e.isActive ? 'opacity:.55' : ''}">
+      <td>
+        <div class="emp-name-cell">
+          <div class="avatar">${initials(e.name)}</div>
+          <div>
+            <div class="emp-name">${esc(e.name)}</div>
+            <div class="emp-role-sub">${esc(e.role)}</div>
+          </div>
+        </div>
+      </td>
+      <td class="text-mono hide-sm" style="color:var(--text-muted)">#${String(e.employeeId).padStart(4,'0')}</td>
+      <td class="hide-sm">${esc(e.department)}</td>
+      <td class="text-mono">${fmt(e.salary)}</td>
+      <td>${leaveBadge(e.leaveStatus)}</td>
+      <td><span class="badge ${e.isActive ? 'badge-active' : 'badge-inactive'}">${e.isActive ? 'Active' : 'Inactive'}</span></td>
+      <td>
+        <div class="action-cell">
+          <button class="btn btn-ghost btn-sm" title="Edit" onclick="openEditModal(${e.id})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          ${e.isActive ? `<button class="btn btn-ghost btn-sm" title="Deactivate" onclick="openConfirm(${e.id}, '${esc(e.name)}')" style="color:var(--red)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </button>` : ''}
+        </div>
+      </td>
+    </tr>`).join('');
+
+  document.getElementById('empTableWrap').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th class="hide-sm">ID</th>
+          <th class="hide-sm">Department</th>
+          <th>Salary</th>
+          <th>Leave</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+/* ─── Modals ─── */
+function openAddModal() {
+  document.getElementById('addForm').reset();
+  openModal('addModal');
+}
+
+function openEditModal(id) {
+  const e = allEmployees.find(x => x.id === id);
+  if (!e) return;
+  currentEditId = id;
+
+  document.getElementById('editId').value = id;
+  document.getElementById('editName').value = e.name;
+  document.getElementById('editDept').value = e.department;
+  document.getElementById('editRole').value = e.role;
+  document.getElementById('editSalary').value = e.salary;
+  document.getElementById('editLeavesAllowed').value = e.leavesAllowed;
+  document.getElementById('editActive').value = String(e.isActive);
+
+  const leaveBox = document.getElementById('editLeaveReview');
+  if (e.leaveStatus === 1 && e.leavesPending > 0) {
+    leaveBox.style.display = 'block';
+    document.getElementById('editLeaveDesc').textContent =
+      `${e.name} has requested ${e.leavesPending} day${e.leavesPending > 1 ? 's' : ''} of leave (taken: ${e.leavesTaken}/${e.leavesAllowed}).`;
+  } else {
+    leaveBox.style.display = 'none';
+  }
+
+  openModal('editModal');
+}
+
+function openConfirm(id, name) {
+  currentDeactivateId = id;
+  document.getElementById('confirmName').textContent = name;
+  openModal('confirmModal');
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+/* ─── Submit: Add ─── */
+async function submitAdd(e) {
+  e.preventDefault();
+  try {
+    const payload = {
+      name: document.getElementById('addName').value.trim(),
+      employeeId: Number(document.getElementById('addEmpId').value),
+      department: document.getElementById('addDept').value.trim() || 'General',
+      role: document.getElementById('addRole').value.trim() || 'Staff',
+      salary: Number(document.getElementById('addSalary').value) || 0,
+      leavesAllowed: Number(document.getElementById('addLeaves').value) || 5,
+    };
+    await api('/api/employees', { method: 'POST', body: JSON.stringify(payload) });
+    closeModal('addModal');
+    toast('Employee added successfully', 'success');
+    await loadEmployees();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+/* ─── Submit: Edit ─── */
+async function submitEdit(ev) {
+  ev.preventDefault();
+  try {
+    const payload = {
+      name: document.getElementById('editName').value.trim(),
+      department: document.getElementById('editDept').value.trim(),
+      role: document.getElementById('editRole').value.trim(),
+      salary: Number(document.getElementById('editSalary').value),
+      leavesAllowed: Number(document.getElementById('editLeavesAllowed').value),
+      isActive: document.getElementById('editActive').value === 'true',
+    };
+    await api(`/api/employees/${currentEditId}`, { method: 'PUT', body: JSON.stringify(payload) });
+    closeModal('editModal');
+    toast('Employee updated', 'success');
+    await loadEmployees();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+/* ─── Leave review ─── */
+async function reviewLeave(action) {
+  if (!currentEditId) return;
+  const e = allEmployees.find(x => x.id === currentEditId);
+  if (!e) return;
+  try {
+    let update;
+    if (action === 'approve') {
+      update = { leavesTaken: e.leavesTaken + e.leavesPending, leavesPending: 0, leaveStatus: 2 };
+    } else {
+      update = { leavesPending: 0, leaveStatus: 3 };
+    }
+    await api(`/api/employees/${currentEditId}`, { method: 'PUT', body: JSON.stringify(update) });
+    closeModal('editModal');
+    toast(`Leave ${action}d`, 'success');
+    await loadEmployees();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+/* ─── Deactivate ─── */
+async function confirmDeactivate() {
+  if (!currentDeactivateId) return;
+  try {
+    await api(`/api/employees/${currentDeactivateId}`, { method: 'DELETE' });
+    closeModal('confirmModal');
+    toast('Employee deactivated', 'info');
+    await loadEmployees();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+/* ─── Seed demo data ─── */
+async function seedDemo() {
+  const existing = allEmployees.map(e => e.employeeId);
+  const toAdd = SEED_EMPLOYEES.filter(e => !existing.includes(e.employeeId));
+  if (!toAdd.length) { toast('Demo data already present', 'info'); return; }
+  toast(`Seeding ${toAdd.length} employees…`, 'info');
+  let added = 0;
+  for (const emp of toAdd) {
+    try {
+      await api('/api/employees', { method: 'POST', body: JSON.stringify(emp) });
+      added++;
+    } catch {}
+  }
+  toast(`Added ${added} demo employees`, 'success');
+  await loadEmployees();
+}
+
+/* ─── Utils ─── */
+function initials(name) {
+  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmt(n) {
+  if (n == null) return '—';
+  return '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
+function leaveBadge(s) {
+  const map = { 0: ['badge-none','None'], 1: ['badge-pending','Pending'], 2: ['badge-approved','Approved'], 3: ['badge-rejected','Rejected'] };
+  const [cls, label] = map[s] ?? ['badge-none','?'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+/* ─── Close on backdrop click ─── */
+document.querySelectorAll('.backdrop').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+/* ─── Init ─── */
+loadEmployees();
+</script>
+</body>
+</html>

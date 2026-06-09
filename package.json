@@ -1,0 +1,16 @@
+{
+  "name": "emps-employee-management",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "@netlify/database": "^1.0.0",
+    "drizzle-orm": "beta"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^2.8.0",
+    "drizzle-kit": "beta",
+    "typescript": "^5.5.0"
+  }
+}
